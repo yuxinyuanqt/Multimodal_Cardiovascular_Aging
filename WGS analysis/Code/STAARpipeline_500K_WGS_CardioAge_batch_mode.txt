@@ -72,73 +72,6 @@ for ((i=0; i<${#CHR_LIST[@]}; i++)); do
       --destination=${path_Single} --instance-type="mem3_ssd1_v2_x16" --yes
 done
 
-############# Coding
-# Define the number of sub-tasks for each chromosome
-GC_Coding_Array=(17 11 9 7 8 9 8 6 7 6 11 9 3 5 5 7 10 3 12 5 2 4)
-
-# Loop through all chromosomes
-for CHR in {1..22}
-do
-  # Get the number of sub-tasks for the current chromosome
-  num_arrays=${GC_Coding_Array[$((CHR-1))]}
-  
-  # Loop through all sub-tasks for the current chromosome
-  for i in $(seq 1 $num_arrays)
-  do
-  
-    # Default number of cores
-    user_cores=24
-	
-    dx run staarpipeline --priority=low \
-      -inullobj_file=${nullmodel_WGS} \
-      -iagds_file=ukbb_lilab:/UKB_500K_WGS_AGDS_uncompressed_newQClabel_HWE/ukb.500k.wgs.chr${CHR}.pass.annotated.gds \
-      -iannotation_name_catalog_file=ukbb_lilab:/Annotation_name_catalog.csv \
-      -itest_type=Gene_Centric_Coding \
-      -ivariant_type=SNV \
-      -imax_maf=0.01 \
-      -iuser_cores=${user_cores} \
-      -iarrayid=${i} \
-      -imax_rv_num=10000 \
-      -imax_rv_num_prefilter=15000 \
-      -ioutfile=UKBB_WGS_CardioAge_Coding_SNV_chr${CHR}_arrayid${i} \
-      -iqc_label_dir=annotation/info/QC_label3 \
-      -iannotation_dir=annotation/info/FunctionalAnnotation \
-      -iuse_annotation_weights=YES \
-      --destination=${path_Gene_Centric_Coding} --instance-type="mem3_ssd1_v2_x32" --yes
-  done
-done
-
-# If a job fails after 10 attempts, it needs to be resubmitted (e.g., chr5_arrayid3).
-CHR_LIST=(15 12 17 17 16)
-ARRAYID_LIST=(1 5 6 5 4)
-
-for ((i=0; i<${#CHR_LIST[@]}; i++)); do
-  CHR=${CHR_LIST[$i]}
-  arrayid=${ARRAYID_LIST[$i]}
-  
-  echo "🔁 Resubmitting Gene_Centric_Coding: CHR ${CHR}, arrayid ${arrayid}"
-  
-  # Default number of cores
-  user_cores=24
-  
-    dx run staarpipeline --priority=low \
-      -inullobj_file=${nullmodel_WGS} \
-      -iagds_file=ukbb_lilab:/UKB_500K_WGS_AGDS_uncompressed_newQClabel_HWE/ukb.500k.wgs.chr${CHR}.pass.annotated.gds \
-      -iannotation_name_catalog_file=ukbb_lilab:/Annotation_name_catalog.csv \
-      -itest_type=Gene_Centric_Coding \
-      -ivariant_type=SNV \
-      -imax_maf=0.01 \
-      -iuser_cores=${user_cores} \
-      -iarrayid=${arrayid} \
-      -imax_rv_num=10000 \
-      -imax_rv_num_prefilter=15000 \
-      -ioutfile=UKBB_WGS_CardioAge_Coding_SNV_chr${CHR}_arrayid${arrayid} \
-      -iqc_label_dir=annotation/info/QC_label3 \
-      -iannotation_dir=annotation/info/FunctionalAnnotation \
-      -iuse_annotation_weights=YES \
-      --destination=${path_Gene_Centric_Coding} --instance-type="mem3_ssd1_v2_x32" --yes
-done
-
 ############# Coding_incl_ptv
 # Define the number of sub-tasks for each chromosome
 GC_Coding_Array=(17 11 9 7 8 9 8 6 7 6 11 9 3 5 5 7 10 3 12 5 2 4)
@@ -373,39 +306,6 @@ for(chr in 1:22){
 # Save the merged results to an RData file
 save(results_single_batch,file="results_single_batch.Rdata")
 system(paste0("dx upload results_single_batch.Rdata --path ",paste0(output_path,"results_single_batch.Rdata")))
-
-#####Coding
-
-## results path
-input_path <- "/UKB_500K_WGS_staarpipeline/CardioAge/revised/Gene_Centric_Coding/"
-output_path <- input_path
-
-## results name
-gene_centric_results_name <- "UKBB_WGS_CardioAge_Coding_SNV_chr"
-
-# Array defining the number of sub-tasks for each chromosome
-GC_Coding_Array <- c(17,11,9,7,8,9,8,6,7,6,11,9,3,5,5,7,10,3,12,5,2,4)
-
-# Initialize a variable to store the merged results across all sub-tasks
-results_coding_genome_batch <- c()
-
-for(chr in 1:22){
-  print(paste0("Chr: ",chr))
-  
-  # Loop through all sub-tasks for the current chromosome
-  for(i in seq(GC_Coding_Array[chr])){
-    print(paste0("i: ",i))
-    results_coding <- get(load(paste0("/mnt/project",input_path,gene_centric_results_name,chr,"_arrayid",i,".Rdata")))
-
-    results_coding_genome_batch <- c(results_coding_genome_batch,results_coding)
-  }
-}
-
-table(sapply(results_coding_genome_batch,is.null))
-
-# Save the merged results to an RData file
-save(results_coding_genome_batch,file="results_coding_genome_batch.Rdata")
-system(paste0("dx upload results_coding_genome_batch.Rdata --path ",paste0(output_path,"results_coding_genome_batch.Rdata")))
 
 #####Coding_incl_ptv
 
