@@ -148,5 +148,5 @@ if __name__ == '__main__':
                                 "params"         # hyperparameters for each trial
                              )) 
     
-    df_results.to_csv("/path_to_the_file/optuna_results_catboost.csv", index=False)
+    df_results.to_csv("/path_to_the_file/hyperparameter_search_results_catboost.csv", index=False)
 
